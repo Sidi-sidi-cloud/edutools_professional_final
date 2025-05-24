@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTools - Assistente Docente</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>EduTools</h1>
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3 class="menu-section-title">NAVIGAZIONE</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('home') }}">
+                                <i class="bi bi-house-door"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="menu-item active">
+                            <a href="{{ url_for('chatbot') }}">
+                                <i class="bi bi-chat-dots"></i>
+                                <span>Assistente Docente</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('valutazione') }}">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>Valutazione RIZA</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('view_observations') }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Visualizza Osservazioni</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                {% if session.get('user_role') == 'admin' %}
+                <div class="menu-section">
+                    <h3 class="menu-section-title">AMMINISTRAZIONE</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Dashboard Admin</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_users') }}">
+                                <i class="bi bi-people"></i>
+                                <span>Gestione Utenti</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_conversations') }}">
+                                <i class="bi bi-chat-left-text"></i>
+                                <span>Conversazioni</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="menu-section">
+                    <h3 class="menu-section-title">ACCOUNT</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Profilo</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h2 class="header-title">Assistente Docente</h2>
+                </div>
+                <div class="header-actions">
+                    <div class="user-menu">
+                        <img src="https://ui-avatars.com/api/?name={{ session.get('user_name', 'User') }}&background=4361ee&color=fff" alt="User Avatar" class="user-avatar">
+                        <span class="user-name">{{ session.get('user_name', 'Utente') }}</span>
+                        <i class="bi bi-chevron-down dropdown-toggle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Assistente Docente AI</h3>
+                        <div class="card-actions">
+                            <button type="button" id="suggestions-toggle-btn" class="btn btn-secondary btn-sm">
+                                <i class="bi bi-lightbulb"></i> Suggerimenti
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="d-flex" style="height: 70vh;">
+                            <div class="chat-container">
+                                <div class="chat-messages" id="chat-messages">
+                                    <div class="message bot-message">
+                                        <p>Ciao! Sono il tuo assistente docente. Come posso aiutarti oggi?</p>
+                                    </div>
+                                </div>
+                                <div class="chat-input-container">
+                                    <textarea id="chat-input" class="chat-input" placeholder="Scrivi la tua domanda qui..." rows="1"></textarea>
+                                    <button id="send-button" class="send-button">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="suggestions-sidebar" id="suggestions-sidebar">
+                                <h3 class="suggestions-title">Suggerimenti per l'uso</h3>
+                                <div class="suggestion-chips">
+                                    <div class="suggestion-chip" data-query="Come posso valutare l'apprendimento in modo formativo?">
+                                        Come posso valutare l'apprendimento in modo formativo?
+                                    </div>
+                                    <div class="suggestion-chip" data-query="Strategie per la gestione di studenti con difficoltà di attenzione">
+                                        Strategie per la gestione di studenti con difficoltà di attenzione
+                                    </div>
+                                    <div class="suggestion-chip" data-query="Idee per attività di gruppo collaborative">
+                                        Idee per attività di gruppo collaborative
+                                    </div>
+                                    <div class="suggestion-chip" data-query="Come comunicare efficacemente con i genitori?">
+                                        Come comunicare efficacemente con i genitori?
+                                    </div>
+                                    <div class="suggestion-chip" data-query="Tecniche di differenziazione didattica">
+                                        Tecniche di differenziazione didattica
+                                    </div>
+                                    <div class="suggestion-chip" data-query="Come integrare la tecnologia nella didattica?">
+                                        Come integrare la tecnologia nella didattica?
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="footer">
+                <p>&copy; 2025 EduTools - Tutti i diritti riservati</p>
+            </footer>
+        </main>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            }
+            
+            mobileMenuToggle.addEventListener('click', toggleSidebar);
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            // Chat functionality
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            
+            // Suggestions sidebar toggle
+            const suggestionsSidebar = document.getElementById('suggestions-sidebar');
+            const suggestionsToggleBtn = document.getElementById('suggestions-toggle-btn');
+            
+            suggestionsToggleBtn.addEventListener('click', function() {
+                suggestionsSidebar.classList.toggle('d-none');
+            });
+            
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+                if (this.scrollHeight > 120) {
+                    this.style.height = '120px';
+                }
+            });
+            
+            // Send message on Enter (but allow Shift+Enter for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            sendButton.addEventListener('click', sendMessage);
+            
+            function sendMessage() {
+                const message = chatInput.value.trim();
+                if (message) {
+                    // Add user message to chat
+                    addMessage(message, 'user');
+                    
+                    // Clear input
+                    chatInput.value = '';
+                    chatInput.style.height = 'auto';
+                    
+                    // Show typing indicator
+                    showTypingIndicator();
+                    
+                    // Send to backend
+                    fetch('/chatbot_query', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ query: message }),
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Remove typing indicator
+                        removeTypingIndicator();
+                        
+                        // Add bot response
+                        addMessage(data.response, 'bot');
+                        
+                        // Update suggestions if provided
+                        if (data.suggestions && data.suggestions.length > 0) {
+                            updateSuggestions(data.suggestions);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        removeTypingIndicator();
+                        addMessage('Mi dispiace, si è verificato un errore. Riprova più tardi.', 'bot');
+                    });
+                }
+            }
+            
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+                
+                // Process markdown-like formatting
+                let formattedText = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n/g, '<br>');
+                
+                // Handle lists
+                if (formattedText.includes('\n- ')) {
+                    formattedText = formattedText.replace(/\n- (.*?)(?=\n|$)/g, '<li>$1</li>');
+                    formattedText = formattedText.replace(/<li>(.*?)<\/li>/g, '<ul><li>$1</li></ul>');
+                    formattedText = formattedText.replace(/<\/ul>\s*<ul>/g, '');
+                }
+                
+                if (formattedText.includes('\n1. ')) {
+                    formattedText = formattedText.replace(/\n\d+\. (.*?)(?=\n|$)/g, '<li>$1</li>');
+                    formattedText = formattedText.replace(/<li>(.*?)<\/li>/g, '<ol><li>$1</li></ol>');
+                    formattedText = formattedText.replace(/<\/ol>\s*<ol>/g, '');
+                }
+                
+                messageDiv.innerHTML = `<p>${formattedText}</p>`;
+                chatMessages.appendChild(messageDiv);
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                // Add fade-in animation
+                messageDiv.classList.add('fade-in');
+            }
+            
+            function showTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.classList.add('typing-indicator');
+                typingDiv.id = 'typing-indicator';
+                typingDiv.innerHTML = `
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                `;
+                chatMessages.appendChild(typingDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function removeTypingIndicator() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+            
+            function updateSuggestions(suggestions) {
+                const suggestionChips = document.querySelector('.suggestion-chips');
+                suggestionChips.innerHTML = '';
+                
+                suggestions.forEach(suggestion => {
+                    const chip = document.createElement('div');
+                    chip.classList.add('suggestion-chip');
+                    chip.setAttribute('data-query', suggestion);
+                    chip.textContent = suggestion;
+                    
+                    chip.addEventListener('click', function() {
+                        const query = this.getAttribute('data-query');
+                        chatInput.value = query;
+                        chatInput.focus();
+                    });
+                    
+                    suggestionChips.appendChild(chip);
+                });
+            }
+            
+            // Click event for suggestion chips
+            document.querySelectorAll('.suggestion-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const query = this.getAttribute('data-query');
+                    chatInput.value = query;
+                    chatInput.focus();
+                });
+            });
+            
+            // Responsive adjustments
+            function handleResize() {
+                if (window.innerWidth >= 768) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+                
+                if (window.innerWidth < 768) {
+                    suggestionsSidebar.classList.add('d-none');
+                } else {
+                    suggestionsSidebar.classList.remove('d-none');
+                }
+            }
+            
+            window.addEventListener('resize', handleResize);
+            handleResize(); // Call once on load
+        });
+    </script>
+</body>
+</html>

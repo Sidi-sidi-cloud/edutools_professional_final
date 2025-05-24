@@ -3,116 +3,449 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Valutazione Formativa RIZA</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>EduTools - Valutazione RIZA</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modern.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container">
-            <a class="navbar-brand" href="/">Valutazione Formativa RIZA</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link active" href="/">Nuova Osservazione</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/view_observations">Visualizza Osservazioni</a>
-                    </li>
-                </ul>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>EduTools</h1>
+                <button class="sidebar-toggle" id="sidebar-toggle">
+                    <i class="bi bi-x-lg"></i>
+                </button>
             </div>
-        </div>
-    </nav>
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3 class="menu-section-title">NAVIGAZIONE</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('home') }}">
+                                <i class="bi bi-house-door"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('chatbot') }}">
+                                <i class="bi bi-chat-dots"></i>
+                                <span>Assistente Docente</span>
+                            </a>
+                        </li>
+                        <li class="menu-item active">
+                            <a href="{{ url_for('valutazione') }}">
+                                <i class="bi bi-clipboard-check"></i>
+                                <span>Valutazione RIZA</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('view_observations') }}">
+                                <i class="bi bi-list-ul"></i>
+                                <span>Visualizza Osservazioni</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                {% if session.get('user_role') == 'admin' %}
+                <div class="menu-section">
+                    <h3 class="menu-section-title">AMMINISTRAZIONE</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_dashboard') }}">
+                                <i class="bi bi-speedometer2"></i>
+                                <span>Dashboard Admin</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_users') }}">
+                                <i class="bi bi-people"></i>
+                                <span>Gestione Utenti</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('admin_conversations') }}">
+                                <i class="bi bi-chat-left-text"></i>
+                                <span>Conversazioni</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="menu-section">
+                    <h3 class="menu-section-title">ACCOUNT</h3>
+                    <ul class="menu-items">
+                        <li class="menu-item">
+                            <a href="#">
+                                <i class="bi bi-person-circle"></i>
+                                <span>Profilo</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('logout') }}">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Logout</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
 
-    <div class="container mt-4">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0">Inserimento Osservazione</h4>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h2 class="header-title">Valutazione RIZA</h2>
+                </div>
+                <div class="header-actions">
+                    <div class="user-menu">
+                        <img src="https://ui-avatars.com/api/?name={{ session.get('user_name', 'User') }}&background=4361ee&color=fff" alt="User Avatar" class="user-avatar">
+                        <span class="user-name">{{ session.get('user_name', 'Utente') }}</span>
+                        <i class="bi bi-chevron-down dropdown-toggle"></i>
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3 class="card-title">Inserisci Osservazione</h3>
                     </div>
                     <div class="card-body">
-                        <form id="observationForm">
-                            <div class="row mb-3">
-                                <div class="col-md-4">
+                        <form id="observation-form">
+                            <div class="form-row">
+                                <div class="form-group col-md-4">
                                     <label for="classe" class="form-label">Classe</label>
-                                    <input type="text" class="form-control" id="classe" required>
+                                    <input type="text" id="classe" class="form-control" placeholder="Es. 3A" required>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="form-group col-md-4">
                                     <label for="allievo" class="form-label">Allievo</label>
-                                    <input type="text" class="form-control" id="allievo" required>
+                                    <input type="text" id="allievo" class="form-control" placeholder="Nome e cognome" required>
                                 </div>
-                                <div class="col-md-4">
-                                    <label for="disciplina" class="form-label">Disciplina/Ambito</label>
-                                    <select class="form-select" id="disciplina" required>
+                                <div class="form-group col-md-4">
+                                    <label for="disciplina" class="form-label">Disciplina</label>
+                                    <select id="disciplina" class="form-control" required>
                                         <option value="" selected disabled>Seleziona disciplina</option>
-                                        {% for d in discipline %}
-                                        <option value="{{ d }}">{{ d }}</option>
+                                        {% for disciplina in discipline %}
+                                        <option value="{{ disciplina }}">{{ disciplina }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="situazione" class="form-label">Situazione-Problema o Attività (opzionale)</label>
-                                <input type="text" class="form-control" id="situazione">
+                            
+                            <div class="form-group">
+                                <label for="situazione" class="form-label">Situazione</label>
+                                <textarea id="situazione" class="form-control" rows="2" placeholder="Descrivi brevemente il contesto in cui è avvenuta l'osservazione"></textarea>
                             </div>
-                            <div class="mb-3">
-                                <label for="osservazione" class="form-label">Osservazione Qualitativa</label>
-                                <textarea class="form-control" id="osservazione" rows="5" required placeholder="Inserisci qui la tua osservazione sul comportamento dell'allievo..."></textarea>
+                            
+                            <div class="form-group">
+                                <label for="osservazione" class="form-label">Osservazione</label>
+                                <textarea id="osservazione" class="form-control" rows="4" placeholder="Descrivi in dettaglio l'osservazione dell'allievo" required></textarea>
                             </div>
-                            <div class="d-grid">
-                                <button type="button" id="getSuggestionsBtn" class="btn btn-primary">Ottieni Suggerimenti</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4" id="suggestionsContainer" style="display: none;">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <h4 class="mb-0">Suggerimenti</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-info">
-                            <p>I suggerimenti seguenti sono basati sull'analisi dell'osservazione inserita. Seleziona il suggerimento più appropriato o modifica manualmente i campi.</p>
-                        </div>
-                        <div id="suggestionsList" class="list-group mb-4">
-                            <!-- I suggerimenti verranno inseriti qui dinamicamente -->
-                        </div>
-                        
-                        <form id="saveForm">
-                            <div class="row mb-3">
-                                <div class="col-md-4">
-                                    <label for="dimensione" class="form-label">Dimensione RIZA</label>
-                                    <input type="text" class="form-control" id="dimensione" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="processo" class="form-label">Processo Specifico/Verbo</label>
-                                    <input type="text" class="form-control" id="processo" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="livello" class="form-label">Livello di Competenza</label>
-                                    <input type="text" class="form-control" id="livello" required>
-                                </div>
-                            </div>
-                            <input type="hidden" id="id_descrittore">
-                            <div class="d-grid">
-                                <button type="button" id="saveObservationBtn" class="btn btn-success">Salva Osservazione</button>
+                            
+                            <div class="form-actions">
+                                <button type="button" id="analyze-button" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Analizza e Suggerisci
+                                </button>
+                                <button type="button" id="reset-form-button" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Reset
+                                </button>
                             </div>
                         </form>
                     </div>
                 </div>
+                
+                <div id="suggestions-container" style="display: none;">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h3 class="card-title">Suggerimenti RIZA</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="loading-suggestions" class="loading-spinner">
+                                <i class="bi bi-arrow-repeat spin"></i>
+                                <span>Analisi in corso...</span>
+                            </div>
+                            
+                            <div id="suggestions-list" class="suggestions-container" style="display: none;"></div>
+                            
+                            <div id="no-suggestions" class="text-center p-4" style="display: none;">
+                                <i class="bi bi-exclamation-circle" style="font-size: 2rem; color: var(--gray-400);"></i>
+                                <p class="mt-2">Nessun suggerimento trovato. Prova a fornire una descrizione più dettagliata dell'osservazione.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Salva Osservazione</h3>
+                        </div>
+                        <div class="card-body">
+                            <form id="save-form">
+                                <div class="form-row">
+                                    <div class="form-group col-md-4">
+                                        <label for="dimensione" class="form-label">Dimensione RIZA</label>
+                                        <input type="text" id="dimensione" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="processo" class="form-label">Processo</label>
+                                        <input type="text" id="processo" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group col-md-4">
+                                        <label for="livello" class="form-label">Livello</label>
+                                        <input type="text" id="livello" class="form-control" readonly>
+                                    </div>
+                                </div>
+                                
+                                <input type="hidden" id="id_descrittore">
+                                
+                                <div class="form-actions">
+                                    <button type="button" id="save-button" class="btn btn-success" disabled>
+                                        <i class="bi bi-save"></i> Salva Osservazione
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+            
+            <footer class="footer">
+                <p>&copy; 2025 EduTools - Tutti i diritti riservati</p>
+            </footer>
+        </main>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <div class="overlay" id="overlay"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+                document.body.classList.toggle('sidebar-open');
+            }
+            
+            mobileMenuToggle.addEventListener('click', toggleSidebar);
+            sidebarToggle.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+            
+            // Form handling
+            const analyzeButton = document.getElementById('analyze-button');
+            const resetFormButton = document.getElementById('reset-form-button');
+            const saveButton = document.getElementById('save-button');
+            const suggestionsContainer = document.getElementById('suggestions-container');
+            const loadingSuggestions = document.getElementById('loading-suggestions');
+            const suggestionsList = document.getElementById('suggestions-list');
+            const noSuggestions = document.getElementById('no-suggestions');
+            
+            analyzeButton.addEventListener('click', analyzeObservation);
+            resetFormButton.addEventListener('click', resetForm);
+            saveButton.addEventListener('click', saveObservation);
+            
+            function analyzeObservation() {
+                const osservazione = document.getElementById('osservazione').value.trim();
+                const disciplina = document.getElementById('disciplina').value;
+                
+                if (!osservazione || !disciplina) {
+                    alert('Inserisci sia l\'osservazione che la disciplina per procedere con l\'analisi.');
+                    return;
+                }
+                
+                // Show suggestions container and loading
+                suggestionsContainer.style.display = 'block';
+                loadingSuggestions.style.display = 'flex';
+                suggestionsList.style.display = 'none';
+                noSuggestions.style.display = 'none';
+                saveButton.disabled = true;
+                
+                // Reset previous values
+                document.getElementById('dimensione').value = '';
+                document.getElementById('processo').value = '';
+                document.getElementById('livello').value = '';
+                document.getElementById('id_descrittore').value = '';
+                
+                // Scroll to suggestions
+                suggestionsContainer.scrollIntoView({ behavior: 'smooth' });
+                
+                // Send to backend
+                fetch('/get_suggestions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        osservazione: osservazione,
+                        disciplina: disciplina
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loadingSuggestions.style.display = 'none';
+                    
+                    if (data.suggestions && data.suggestions.length > 0) {
+                        displaySuggestions(data.suggestions);
+                        suggestionsList.style.display = 'block';
+                    } else {
+                        noSuggestions.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    loadingSuggestions.style.display = 'none';
+                    noSuggestions.style.display = 'block';
+                });
+            }
+            
+            function displaySuggestions(suggestions) {
+                suggestionsList.innerHTML = '';
+                
+                suggestions.forEach((suggestion, index) => {
+                    const similarityPercentage = Math.round(suggestion.similarita * 100);
+                    let similarityClass = 'badge-low';
+                    if (similarityPercentage >= 70) {
+                        similarityClass = 'badge-high';
+                    } else if (similarityPercentage >= 40) {
+                        similarityClass = 'badge-medium';
+                    }
+                    
+                    const card = document.createElement('div');
+                    card.classList.add('suggestion-card');
+                    card.innerHTML = `
+                        <div class="suggestion-header">
+                            <div class="suggestion-title">
+                                <span class="badge ${similarityClass}">${similarityPercentage}% match</span>
+                                <h3>${suggestion.dimensione_riza} - ${suggestion.processo_specifico_verbo}</h3>
+                                <div class="suggestion-level">Livello: ${suggestion.livello}</div>
+                            </div>
+                        </div>
+                        <div class="suggestion-body">
+                            <p>${suggestion.testo_descrittore}</p>
+                            ${suggestion.spiegazione ? `<div class="suggestion-explanation"><strong>Perché è rilevante:</strong> ${suggestion.spiegazione}</div>` : ''}
+                        </div>
+                        <div class="suggestion-footer">
+                            <button type="button" class="btn btn-primary select-suggestion" data-id="${suggestion.id}" data-dimensione="${suggestion.dimensione_riza}" data-processo="${suggestion.processo_specifico_verbo}" data-livello="${suggestion.livello}">
+                                Seleziona
+                            </button>
+                        </div>
+                    `;
+                    
+                    suggestionsList.appendChild(card);
+                });
+                
+                // Add event listeners to select buttons
+                document.querySelectorAll('.select-suggestion').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        const dimensione = this.getAttribute('data-dimensione');
+                        const processo = this.getAttribute('data-processo');
+                        const livello = this.getAttribute('data-livello');
+                        
+                        document.getElementById('dimensione').value = dimensione;
+                        document.getElementById('processo').value = processo;
+                        document.getElementById('livello').value = livello;
+                        document.getElementById('id_descrittore').value = id;
+                        
+                        saveButton.disabled = false;
+                        
+                        // Highlight selected card
+                        document.querySelectorAll('.suggestion-card').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        this.closest('.suggestion-card').classList.add('selected');
+                        
+                        // Scroll to save form
+                        document.getElementById('save-form').scrollIntoView({ behavior: 'smooth' });
+                    });
+                });
+            }
+            
+            function saveObservation() {
+                const classe = document.getElementById('classe').value.trim();
+                const allievo = document.getElementById('allievo').value.trim();
+                const disciplina = document.getElementById('disciplina').value;
+                const situazione = document.getElementById('situazione').value.trim();
+                const osservazione = document.getElementById('osservazione').value.trim();
+                const dimensione = document.getElementById('dimensione').value;
+                const processo = document.getElementById('processo').value;
+                const livello = document.getElementById('livello').value;
+                const id_descrittore = document.getElementById('id_descrittore').value;
+                
+                if (!classe || !allievo || !disciplina || !osservazione || !dimensione || !processo || !livello) {
+                    alert('Compila tutti i campi obbligatori per salvare l\'osservazione.');
+                    return;
+                }
+                
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<i class="bi bi-arrow-repeat spin"></i> Salvataggio...';
+                
+                fetch('/save_observation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        classe: classe,
+                        allievo: allievo,
+                        disciplina: disciplina,
+                        situazione: situazione,
+                        osservazione: osservazione,
+                        dimensione: dimensione,
+                        processo: processo,
+                        livello: livello,
+                        id_descrittore: id_descrittore
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Osservazione salvata con successo!');
+                        resetForm();
+                    } else {
+                        alert('Errore durante il salvataggio: ' + (data.error || 'Errore sconosciuto'));
+                        saveButton.disabled = false;
+                        saveButton.innerHTML = '<i class="bi bi-save"></i> Salva Osservazione';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Errore durante il salvataggio. Riprova più tardi.');
+                    saveButton.disabled = false;
+                    saveButton.innerHTML = '<i class="bi bi-save"></i> Salva Osservazione';
+                });
+            }
+            
+            function resetForm() {
+                document.getElementById('observation-form').reset();
+                document.getElementById('save-form').reset();
+                suggestionsContainer.style.display = 'none';
+                saveButton.disabled = true;
+                saveButton.innerHTML = '<i class="bi bi-save"></i> Salva Osservazione';
+            }
+            
+            // Responsive adjustments
+            function handleResize() {
+                if (window.innerWidth >= 768) {
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                    document.body.classList.remove('sidebar-open');
+                }
+            }
+            
+            window.addEventListener('resize', handleResize);
+        });
+    </script>
 </body>
 </html>
